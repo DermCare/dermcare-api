@@ -28,7 +28,7 @@ const drugModel = require('./drugModel')
 // }
 
 function medicineHandler(req, res) {
-    response(200, 'success', drugModel, 'Berhasil menampilkan obat', res)
+    response(200, false, drugModel, 'Berhasil menampilkan obat', res)
 }
 
 async function predictHandler(req, res) {
@@ -60,9 +60,9 @@ async function predictHandler(req, res) {
         "createdAt": createdAt,
         "image": `https://storage.googleapis.com/dermcare-model-bucket/${id}.jpg`,
         "drug": { 
-            "drug_img": drug.Image_link,
-            "drug_name": drug.Drug_Name,
-            "desc": drug.Description
+            "drug_img": drug.image_link,
+            "drug_name": drug.drug_name,
+            "desc": drug.description
         }
     }
 
@@ -72,16 +72,16 @@ async function predictHandler(req, res) {
     if (!score) {
         res.status(400).send('There is a failure')
     } else {
-        response(200, 'success',  data, 'Berhasil prediksi gambar', res)
+        response(200, false,  data, 'Berhasil prediksi gambar', res)
     }
 }
 
 async function getData(req, res) {
     const user = await getUser(req.user.id)
     if (!user) {
-        response(404, 'fail', 'Users Not Found', 'Not Found', res)
+        response(404, true, 'Users Not Found', 'Not Found', res)
     } else {
-        response(200, 'success', user, 'Users Load Successfully', res)
+        response(200, false, user, 'Users Load Successfully', res)
     }
 }
 
@@ -101,7 +101,7 @@ async function editHandler(req, res) {
     if (!check) {
         res.status(400).send('There is a failure')
     } else {
-        response(200, 'success',  data, 'Berhasil merubah data', res)
+        response(200, false,  data, 'Berhasil merubah data', res)
     }
 
 }
@@ -109,9 +109,9 @@ async function editHandler(req, res) {
 async function historiesHandler(req,res) {
     const histories = await getHistories(req.user.id)
     if (histories.length === 0) {
-        response(204, 'success', 'There is no history', 'You do not have scanning histories', res)
+        response(204, false, 'There is no history', 'You do not have scanning histories', res)
     } else {
-        response(200, 'success', histories, 'Histories Load Successfully', res)
+        response(200, false, histories, 'Histories Load Successfully', res)
     }
 }
 
@@ -131,10 +131,10 @@ async function registerHandler(req, res) {
     const user = await db.where('username', '==', username).get()
 
     if (!username || !password) {
-        return response(400, 'fail', '', 'Username dan password tidak boleh kosong', res)
+        return response(400, true, '', 'Username dan password tidak boleh kosong', res)
     } 
     if (!user.empty) {
-        return response(400, 'fail', '', 'Akun atau email terkait sudah digunakan', res)
+        return response(400, true, '', 'Akun atau email terkait sudah digunakan', res)
     }
 
     const hashPassword = await bcrypt.hash(password, 10)
@@ -155,7 +155,7 @@ async function registerHandler(req, res) {
     }
 
     await storeUser(id, data)
-    return response(201, 'success', newUser, 'Berhasil melakukan register', res)
+    return response(201, false, newUser, 'Berhasil melakukan register', res)
 }
 
 async function loginHandler(req, res) {
@@ -163,14 +163,14 @@ async function loginHandler(req, res) {
     const user = await db.where('email', '==', email).get()
 
     if (user.empty) {
-        return response(404, '', 'Akun tidak terdaftar', res)
+        return response(404, true, '', 'Akun tidak terdaftar', res)
     }
 
     const userData = user.docs[0].data()
     const isValidate = await bcrypt.compare(password, userData.password)
 
     if (!isValidate) {
-        return response(400, 'fail', '', 'Autentikasi gagal', res)
+        return response(400, true, '', 'Autentikasi gagal', res)
     }
 
     const userAccess = {
@@ -184,7 +184,7 @@ async function loginHandler(req, res) {
         username: userData.username,
         token: token
     }
-    return response(200, 'success', data, 'Berhasil login', res)
+    return response(200, false, data, 'Berhasil login', res)
 }
 
 function verifyToken(req, res, next) {
