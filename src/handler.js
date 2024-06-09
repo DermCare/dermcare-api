@@ -8,8 +8,28 @@ const db = new Firestore().collection('users')
 
 const response = require("./response")
 const loadModel = require('./loadModel')
-const { getUser, storeUser, storeData, getHistories, editData } = require('./dataService ')
+const { getUser, storeUser, storeData, getHistories, editData} = require('./dataService')
+const uploadImg = require('./uploadImage')
 const diseaseClass = require('./diseaseClass')
+const drugModel = require('./drugModel')
+
+// const diseaseClassCopy = require('./additional/diseaseClass copy')
+
+// async function inputHandler(req, res) {
+//     const newFire = new Firestore()
+//     const db = newFire.collection('diseases')
+    
+//     const array  = diseaseClassCopy
+
+//     array.forEach(data => {
+//         db.doc(`${data.id}`).set(data)
+//         console.log(data.id)
+//     })
+// }
+
+function medicineHandler(req, res) {
+    response(200, 'success', drugModel, 'Berhasil menampilkan obat', res)
+}
 
 async function predictHandler(req, res) {
     const user = req.user
@@ -26,29 +46,38 @@ async function predictHandler(req, res) {
     const confidenceScore = Math.max(...score) * 100
 
     const classResult = tf.argMax(prediction, 1).dataSync()[0]
+    // const result = await getDisease(classResult+1)
     const result = diseaseClass[classResult]
+    const drug = drugModel[classResult]
 
     const id = crypto.randomUUID()
     const createdAt = new Date().toISOString()
-
+    
     const data = {
         "id": id,
         "result": result,
         "score": confidenceScore,
-        "createdAt": createdAt
+        "createdAt": createdAt,
+        "image": `https://storage.googleapis.com/dermcare-model-bucket/${id}.jpg`,
+        "drug": { 
+            "drug_img": drug.Image_link,
+            "drug_name": drug.Drug_Name,
+            "desc": drug.Description
+        }
     }
 
     await storeData(user.id, id, data)
+    await uploadImg(req.file, id)
 
     if (!score) {
-        res.status(400).send('API not ready')
+        res.status(400).send('There is a failure')
     } else {
         response(200, 'success',  data, 'Berhasil prediksi gambar', res)
     }
 }
 
 async function getData(req, res) {
-    const user = await getUser(req.user.username)
+    const user = await getUser(req.user.id)
     if (!user) {
         response(404, 'fail', 'Users Not Found', 'Not Found', res)
     } else {
@@ -70,7 +99,7 @@ async function editHandler(req, res) {
     const check = await editData(user.id, data)
 
     if (!check) {
-        res.status(400).send('API not ready')
+        res.status(400).send('There is a failure')
     } else {
         response(200, 'success',  data, 'Berhasil merubah data', res)
     }
@@ -80,7 +109,7 @@ async function editHandler(req, res) {
 async function historiesHandler(req,res) {
     const histories = await getHistories(req.user.id)
     if (histories.length === 0) {
-        response(404, 'fail', 'There is no history', 'Not Found', res)
+        response(204, 'success', 'There is no history', 'You do not have scanning histories', res)
     } else {
         response(200, 'success', histories, 'Histories Load Successfully', res)
     }
@@ -126,12 +155,12 @@ async function registerHandler(req, res) {
     }
 
     await storeUser(id, data)
-    return response(201, 'succcess', newUser, 'Berhasil melakukan register', res)
+    return response(201, 'success', newUser, 'Berhasil melakukan register', res)
 }
 
 async function loginHandler(req, res) {
-    const { username, password } = req.body
-    const user = await db.where('username', '==', username).get()
+    const { email, password } = req.body
+    const user = await db.where('email', '==', email).get()
 
     if (user.empty) {
         return response(404, '', 'Akun tidak terdaftar', res)
@@ -145,12 +174,14 @@ async function loginHandler(req, res) {
     }
 
     const userAccess = {
-        username: username,
+        username: userData.username,
         id: userData.id
     }
 
-    const token = jwt.sign(userAccess, process.env.ACCESS_TOKEN, { expiresIn: '2m' })
+    const token = jwt.sign(userAccess, process.env.ACCESS_TOKEN, { expiresIn: '5m' })
     const data = { 
+        email: userData.email,
+        username: userData.username,
         token: token
     }
     return response(200, 'success', data, 'Berhasil login', res)
@@ -168,4 +199,15 @@ function verifyToken(req, res, next) {
     })
 }
 
-module.exports = { predictHandler, getData, modelHandler, registerHandler, loginHandler, verifyToken, historiesHandler, editHandler}
+module.exports = { 
+    predictHandler, 
+    getData, 
+    modelHandler, 
+    registerHandler, 
+    loginHandler, 
+    verifyToken, 
+    historiesHandler, 
+    editHandler, 
+    medicineHandler
+    // inputHandler 
+}
