@@ -15,7 +15,8 @@ const {
   verifyToken, 
   historiesHandler, 
   editHandler,
-  medicineHandler, 
+  medicineHandler,
+  deleteHisotryHandler, 
   // inputHandler
 } = require('./src/handler')
 
@@ -27,13 +28,14 @@ app.post('/login', loginHandler)
 app.post('/predict', verifyToken, upload.single('image'), predictHandler)
 app.get('/user', verifyToken, getData)
 app.get('/user/histories', verifyToken, historiesHandler)
+app.delete('/user/histories/:id', verifyToken, deleteHisotryHandler)
 
-app.put('/user/edit', verifyToken, editHandler)
+app.put('/user', verifyToken, editHandler)
 
 app.get('/medicine', medicineHandler)
 
 // app.post('/input', inputHandler)
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`This API running on port ${port}`)
 })

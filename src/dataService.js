@@ -13,7 +13,6 @@ async function storeData(user_id, id, data) {
 }
 
 async function getUser(id) {
-    // const user = users.where('username', '==', username)
     const user = users.doc(id)
     const snapshot = await user.get()
     return snapshot.data()

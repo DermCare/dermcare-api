@@ -27,8 +27,30 @@ const drugModel = require('./drugModel')
 //     })
 // }
 
+async function deleteHisotryHandler(req, res) {
+    const id = req.params.id
+    const user = req.user
+    const isDelete = await db.doc(user.id).collection('histories').doc(id).delete()
+    if (!isDelete) {
+        response(400, true, null, 'Gagal menghapus history', res)
+    } else { 
+        response(200, false, null, 'History berhasil dihapus', res)
+    }
+}
+
 function medicineHandler(req, res) {
-    response(200, false, drugModel, 'Berhasil menampilkan obat', res)
+    const filter = req.query.type
+
+    const medicine = drugModel.filter((med) => med.drug_type.toLowerCase().match(filter))
+    .map((med) => {
+        return {
+            name: med.drug_name,
+            class: med.class_type,
+            image: med.image_link,
+            type: med.drug_type
+        }
+    })
+    response(200, false, medicine, 'Berhasil menampilkan obat', res)
 }
 
 async function predictHandler(req, res) {
@@ -62,6 +84,7 @@ async function predictHandler(req, res) {
         "drug": { 
             "drug_img": drug.image_link,
             "drug_name": drug.drug_name,
+            "drug_type": drug.drug_type,
             "desc": drug.description
         }
     }
@@ -131,10 +154,10 @@ async function registerHandler(req, res) {
     const user = await db.where('username', '==', username).get()
 
     if (!username || !password) {
-        return response(400, true, '', 'Username dan password tidak boleh kosong', res)
+        return response(400, true, null, 'Username dan password tidak boleh kosong', res)
     } 
     if (!user.empty) {
-        return response(400, true, '', 'Akun atau email terkait sudah digunakan', res)
+        return response(400, true, null, 'Akun atau email terkait sudah digunakan', res)
     }
 
     const hashPassword = await bcrypt.hash(password, 10)
@@ -163,14 +186,14 @@ async function loginHandler(req, res) {
     const user = await db.where('email', '==', email).get()
 
     if (user.empty) {
-        return response(404, true, '', 'Akun tidak terdaftar', res)
+        return response(404, true, null, 'Akun tidak terdaftar', res)
     }
 
     const userData = user.docs[0].data()
     const isValidate = await bcrypt.compare(password, userData.password)
 
     if (!isValidate) {
-        return response(400, true, '', 'Autentikasi gagal', res)
+        return response(400, true, null, 'Autentikasi gagal', res)
     }
 
     const userAccess = {
@@ -208,6 +231,7 @@ module.exports = {
     verifyToken, 
     historiesHandler, 
     editHandler, 
-    medicineHandler
+    medicineHandler,
+    deleteHisotryHandler
     // inputHandler 
 }
