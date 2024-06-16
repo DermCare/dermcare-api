@@ -16,7 +16,9 @@ const {
   historiesHandler, 
   editHandler,
   medicineHandler,
-  deleteHisotryHandler, 
+  deleteHisotryHandler,
+  diseaseHandler,
+  detailDiseaseHandler, 
   // inputHandler
 } = require('./src/handler')
 
@@ -30,9 +32,11 @@ app.get('/user', verifyToken, getData)
 app.get('/user/histories', verifyToken, historiesHandler)
 app.delete('/user/histories/:id', verifyToken, deleteHisotryHandler)
 
-app.put('/user', verifyToken, editHandler)
+app.put('/user', verifyToken, upload.single('profile_pic'), editHandler)
 
 app.get('/medicine', medicineHandler)
+app.get('/diseases', diseaseHandler)
+app.get('/diseases/:id', detailDiseaseHandler)
 
 // app.post('/input', inputHandler)
 
