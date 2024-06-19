@@ -3,7 +3,7 @@ We want to handle the problem with the application we created called “DermCare
 
 This API is providing data processing service that being use by the Mobile Application.
 
-## How to Install
+# How to Install
 - git clone this repository
 - npm install
 - npm run dev
