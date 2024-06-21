@@ -8,7 +8,7 @@ const db = new Firestore().collection('users')
 
 const response = require("./response")
 const loadModel = require('./loadModel')
-const { getUser, storeUser, storeData, getHistories, editData, getDisease } = require('./dataService')
+const { getUser, storeUser, storeData, getHistories, editData, getMedicine } = require('./dataService')
 const uploadImg = require('./uploadImage')
 const diseaseClass = require('./diseaseClass')
 const drugModel = require('./drugModel')
@@ -17,13 +17,13 @@ const drugModel = require('./drugModel')
 
 // async function inputHandler(req, res) {
 //     const newFire = new Firestore()
-//     const db = newFire.collection('diseases')
+//     const db = newFire.collection('medicines')
 
-//     const array  = diseaseClassCopy
+//     const array  = drugModel
 
 //     array.forEach(data => {
-//         db.doc(`${data.id}`).set(data)
-//         console.log(data.id)
+//         db.doc(`${data.index}`).set(data)
+//         console.log(data.index)
 //     })
 // }
 
@@ -38,10 +38,11 @@ async function deleteHisotryHandler(req, res) {
     }
 }
 
-function medicineHandler(req, res) {
+async function medicineHandler(req, res) {
     const filter = req.query.type
+    const medicines = await getMedicine()
 
-    const medicine = drugModel.filter((med) => med.drug_type.toLowerCase().match(filter))
+    const medicine = medicines.filter((med) => med.drug_type.toLowerCase().match(filter))
         .map((med) => {
             return {
                 name: med.drug_name,
@@ -77,10 +78,9 @@ async function predictHandler(req, res) {
 
     const prediction = model.predict(tensor)
     const score = await prediction.data()
-    const confidenceScore = Math.max(...score) * 100
+    const confidenceScore = (Math.max(...score) * 100).toFixed(2)
 
     const classResult = tf.argMax(prediction, 1).dataSync()[0]
-    // const result = await getDisease(classResult+1)
     const result = diseaseClass[classResult]
     const drug = drugModel[classResult]
 
@@ -120,7 +120,8 @@ async function getData(req, res) {
         username: user.username,
         name: user.name,
         gender: user.gender,
-        age: user.age
+        age: user.age,
+        profile_pic: user.profile_pic
     }
     if (!user) {
         response(404, true, 'Users Not Found', 'Not Found', res)
@@ -172,10 +173,11 @@ async function modelHandler(req, res) {
 }
 
 async function registerHandler(req, res) {
-    const { email, username, name, password } = req.body
-    let age = gender = ' '
+    const { email, username, password } = req.body
+    let age = gender = profile_pic = ' '
+    let name = ' '
 
-    const user = await db.where('username', '==', username).get()
+    const user = await db.where('email', '==', email).get()
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
@@ -205,6 +207,7 @@ async function registerHandler(req, res) {
         password: hashPassword,
         gender: gender,
         age: age,
+        profile_pic: profile_pic
     }
 
     await storeUser(id, data)
@@ -231,7 +234,7 @@ async function loginHandler(req, res) {
         id: userData.id
     }
 
-    const token = jwt.sign(userAccess, process.env.ACCESS_TOKEN, { expiresIn: '5m' })
+    const token = jwt.sign(userAccess, process.env.ACCESS_TOKEN, { expiresIn: '30m' })
     const data = {
         email: userData.email,
         username: userData.username,

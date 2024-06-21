@@ -441,6 +441,4 @@ const drug_model = [
     }
 ]
 
-
-
 module.exports = drug_model

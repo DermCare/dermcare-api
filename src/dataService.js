@@ -1,8 +1,6 @@
 const  { Firestore } = require('@google-cloud/firestore')
 const db = new Firestore()
 const users = db.collection('users')
-const medicines = db.collection('medicines')
-const diseases = db.collection('diseases')
 
 async function storeUser(id, data) {
     return users.doc(id).set(data)
@@ -18,14 +16,10 @@ async function getUser(id) {
     return snapshot.data()
 }
 
-function getMedicine() {
-    
-}
-
-async function getDisease(id) {
-    const disease = diseases.where('id', '==', id)
-    const snapshot = await disease.get()
-    return snapshot.docs.map(doc => doc.data()) 
+async function getMedicine() {
+    const medicines = db.collection('medicines')
+    const snapshot = await medicines.get()
+    return snapshot.docs.map(doc => doc.data())
 }
 
 async function getHistories(user_id) {
@@ -45,4 +39,4 @@ async function editData(user_id, data) {
     }
 }
 
-module.exports = { storeUser, storeData, getUser, getHistories, editData, getDisease}
+module.exports = { storeUser, storeData, getUser, getHistories, editData, getMedicine}
