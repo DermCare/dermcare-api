@@ -3,10 +3,23 @@ We want to handle the problem with the application we created called “DermCare
 
 This API is providing data processing service that being use by the Mobile Application.
 
+## Prerequisites
+- Node JS Installed
+- Code Editor (Visual Studio Code, Sublime Text, or Atom)
+
 ## How to Install
-- git clone this repository
-- npm install
-- npm run dev
+1. Clone this repository
+```bash
+   git clone https://github.com/DermCare/dermcare-api.git
+   ```
+2. Install package manager
+```bash
+   npm install
+   ```
+3. Run the development server
+```bash
+   npm run dev
+   ```
 
 ## Endpoint Documentation
 
